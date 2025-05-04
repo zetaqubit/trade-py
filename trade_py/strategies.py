@@ -6,15 +6,10 @@ from . import strategy
 
 
 def create(cfg: dict, broker: broker.Broker) -> strategy.Strategy:
-    if cfg.strategy_type == 'PositionStrategy':
-        return PositionStrategy(cfg, broker)
-    if cfg.strategy_type == 'RandomStrategy':
-        return RandomStrategy(cfg, broker)
-    if cfg.strategy_type == 'BuyAndHoldStrategy':
-        return BuyAndHoldStrategy(cfg, broker)
-    else:
+    strategy_cls = globals().get(cfg.strategy_type, None)
+    if not strategy_cls or not issubclass(strategy_cls, strategy.Strategy):
         raise NotImplementedError(f'Unknown {cfg.strategy_type=}.')
-
+    return strategy_cls(cfg, broker)
 
 
 class PositionStrategy(strategy.Strategy):
