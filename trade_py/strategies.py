@@ -51,3 +51,18 @@ class BuyAndHoldStrategy(PositionStrategy):
     def __init__(self, cfg, broker):
         super().__init__(cfg, broker)
         self.target_position = 1
+
+
+class MomentumStrategy(PositionStrategy):
+    def __init__(self, cfg, broker):
+        super().__init__(cfg, broker)
+        self.last_price = 0
+
+    def process_market_event(self, market_event: events.MarketEvent):
+        current_price = market_event.ohlc.c
+        if current_price > self.last_price:
+            self.target_position = 1
+        else:
+            self.target_position = 0
+        self.last_price = current_price
+        return super().process_market_event(market_event)
