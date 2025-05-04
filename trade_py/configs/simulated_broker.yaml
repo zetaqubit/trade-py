@@ -1,0 +1,7 @@
+broker_type: SimulatedBroker
+df_path: ~/data/zetaqubit/stock/alpaca/GOOG-1Hour.csv
+symbol: GOOG
+start_date: 2025-04-21  # inclusive
+end_date: 2025-04-26  # exclusive
+
+total_portfolio: 100_000  # dollars
