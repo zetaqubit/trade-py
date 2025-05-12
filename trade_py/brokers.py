@@ -5,6 +5,7 @@ import pandas as pd
 from . import broker
 from . import events
 from . import portfolio
+from alpaca_broker import AlpacaBroker
 
 
 def create(cfg: dict) -> broker.Broker:

@@ -32,6 +32,7 @@ class Quantity:
 
     def __post_init__(self):
         assert (self.shares is None) ^ (self.value is None)
+        assert bool(self.shares) ^ bool(self.value)  # ensure non-zero
 
 
 # Events from Broker to Strategy
