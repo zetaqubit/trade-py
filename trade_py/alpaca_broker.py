@@ -15,11 +15,14 @@ from . import bars
 from . import broker
 from . import credentials
 from . import events
+from . import portfolio
 
 
 class AlpacaBroker(broker.Broker):
     def __init__(self, cfg: dict):
         super().__init__(cfg)
+        self.portfolio = portfolio.Portfolio()
+
         keys = credentials.get_alpaca_keys()
         self.client = TradingClient(keys['api_key'], keys['api_secret'])
 
@@ -62,7 +65,9 @@ class AlpacaBroker(broker.Broker):
         self.market_events.put(market_event)
 
     def next(self):
-        return self.market_events.get()
+        market_event = self.market_events.get()
+        self.portfolio.on_market_event(market_event)
+        return market_event
 
     def process_order_event(self, order_event: events.OrderEvent):
         buy_or_sell, quantity = quantity_to_buy_sell(order_event.quantity)
@@ -82,6 +87,13 @@ class AlpacaBroker(broker.Broker):
     async def on_trade_update(self, data):
         if data.event == "fill":
             print(f"Order filled: {data.order.id} at {data.price} for {data.qty} shares")
+            fill_event = events.FillEvent(
+                time=data.timestamp,
+                symbol=self.cfg.symbol,
+                quantity=data.qty,
+                price=data.price,
+            )
+            self.portfolio.on_fill(fill_event)
 
 
 
