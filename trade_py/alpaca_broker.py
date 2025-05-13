@@ -1,4 +1,5 @@
 import asyncio
+import queue
 import threading
 from typing import Tuple
 
@@ -10,12 +11,10 @@ from alpaca.trading.requests import MarketOrderRequest
 from alpaca.trading.stream import TradingStream
 
 
+from . import bars
 from . import broker
 from . import credentials
 from . import events
-
-
-# Initialize the TradingStream with your API credentials
 
 
 class AlpacaBroker(broker.Broker):
@@ -31,6 +30,10 @@ class AlpacaBroker(broker.Broker):
         # Set up stream for real-time price updates.
         self.stock_stream = StockDataStream(keys['api_key'], keys['api_secret'])
         self.stock_stream.subscribe_quotes(self.on_quote_data, self.cfg.symbol)
+
+        self.bars = bars.Bars()
+        self.bars.add_callback(bars.Frequency.MINUTE, self.on_bar)
+        self.market_events = queue.Queue()
 
         self._start_stream(self.trading_stream)
         self._start_stream(self.stock_stream)
@@ -52,11 +55,14 @@ class AlpacaBroker(broker.Broker):
 
 
     async def on_quote_data(self, data):
-        print(data)
+        self.bars.on_event(time=data.timestamp, price=data.ask_price)
 
+    def on_bar(self, ohlc: events.OHLC):
+        market_event = events.MarketEvent(time=ohlc.end, symbol=self.cfg.symbol, ohlc=ohlc)
+        self.market_events.put(market_event)
 
     def next(self):
-        pass
+        return self.market_events.get()
 
     def process_order_event(self, order_event: events.OrderEvent):
         buy_or_sell, quantity = quantity_to_buy_sell(order_event.quantity)

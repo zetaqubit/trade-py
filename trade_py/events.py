@@ -22,6 +22,8 @@ class OHLC:
     h: float
     l: float
     c: float
+    start: datetime | None = None
+    end: datetime | None = None
 
 
 @dataclass

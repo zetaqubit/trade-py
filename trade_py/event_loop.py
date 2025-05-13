@@ -18,10 +18,8 @@ flags.DEFINE_string('strategy_config', None, "yaml config of strategy to use.")
 def main(_):
     """Main entry point for the application."""
 
-    broker_cfg = configs.load_config(FLAGS.broker_config)
-    broker = brokers.create(broker_cfg)
-    strategy_cfg = configs.load_config(FLAGS.strategy_config)
-    strategy = strategies.create(strategy_cfg, broker)
+    broker = brokers.create(FLAGS.broker_config)
+    strategy = strategies.create(FLAGS.strategy_config, broker)
 
     order_events = []
     try:
