@@ -5,14 +5,14 @@ import pandas as pd
 from . import broker
 from . import events
 from . import portfolio
-from alpaca_broker import AlpacaBroker
+from .alpaca_broker import AlpacaBroker
 
 
 def create(cfg: dict) -> broker.Broker:
-    if cfg.broker_type == 'SimulatedBroker':
-        return SimulatedBroker(cfg)
-    else:
-        raise NotImplementError(f'Unknown {cfg.broker_type=}.')
+    broker_cls = globals().get(cfg.broker_type, None)
+    if not broker_cls or not issubclass(broker_cls, broker.Broker):
+        raise NotImplementedError(f'Unknown {cfg.broker_type=}.')
+    return broker_cls(cfg)
 
 
 class SimulatedBroker(broker.Broker):

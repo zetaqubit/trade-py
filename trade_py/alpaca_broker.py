@@ -3,10 +3,12 @@ import threading
 from typing import Tuple
 
 
+from alpaca.data.live import StockDataStream
 from alpaca.trading.client import TradingClient
 from alpaca.trading.enums import OrderSide, TimeInForce
 from alpaca.trading.requests import MarketOrderRequest
 from alpaca.trading.stream import TradingStream
+
 
 from . import broker
 from . import credentials
@@ -23,24 +25,34 @@ class AlpacaBroker(broker.Broker):
         self.client = TradingClient(keys['api_key'], keys['api_secret'])
 
         # Set up stream to listen to trade events
-        self.stream = TradingStream(keys['api_key'], keys['api_secret'])
-        self.stream.subscribe_trade_updates(self.on_trade_update)
-        self._start_stream()
+        self.trading_stream = TradingStream(keys['api_key'], keys['api_secret'])
+        self.trading_stream.subscribe_trade_updates(self.on_trade_update)
 
-    def _start_stream(self):
+        # Set up stream for real-time price updates.
+        self.stock_stream = StockDataStream(keys['api_key'], keys['api_secret'])
+        self.stock_stream.subscribe_quotes(self.on_quote_data, self.cfg.symbol)
+
+        self._start_stream(self.trading_stream)
+        self._start_stream(self.stock_stream)
+
+    def _start_stream(self, stream):
         try:
             # If an event loop is running (e.g. in IPython), schedule task
             loop = asyncio.get_running_loop()
-            loop.create_task(self.stream._run_forever())
+            loop.create_task(stream._run_forever())
         except RuntimeError:
             # No running loop (e.g. in script), create one in a separate thread
             def runner():
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
-                loop.run_until_complete(self.stream._run_forever())
+                loop.run_until_complete(stream._run_forever())
 
             thread = threading.Thread(target=runner, daemon=True)
             thread.start()
+
+
+    async def on_quote_data(self, data):
+        print(data)
 
 
     def next(self):
