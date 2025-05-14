@@ -28,6 +28,7 @@ def main(_):
             for order_event in order_events:
                 print(f"Processing: {order_event}")
                 broker.process_order_event(order_event)
+            print(broker.portfolio)
             print(f"Processing: {market_event}")
             order_events = strategy.process_market_event(market_event)
     except StopIteration:

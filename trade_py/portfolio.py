@@ -28,8 +28,20 @@ class Portfolio:
         qty = fill.quantity
         cost = fill.price * qty + fill.commission
         self.positions[symbol].quantity += qty
+        self.positions[symbol].price = fill.price
         self.cash -= cost
         # (Log trade, update PnL, etc.)
 
     def net_worth(self):
         return self.cash + sum(p.quantity * p.price for p in self.positions.values())
+
+
+    def equity_position(self):
+        return 1 - self.cash / self.net_worth()
+
+
+    def __str__(self):
+        return (f'Portfolio(cash={self.cash:.2f}, net_worth={self.net_worth():.2f}, '
+                f'positions={dict(self.positions)})')
+
+    __repr__ = __str__

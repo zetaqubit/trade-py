@@ -25,16 +25,14 @@ class PositionStrategy(strategy.Strategy):
     def __init__(self, cfg, broker):
         self.cfg = cfg
         self.broker = broker
-        self.position = 0
         self.target_position = 0
 
     def process_market_event(self, market_event: events.MarketEvent):
-        delta = self.target_position - self.position
+        delta = self.target_position - self.broker.portfolio.equity_position()
         if delta == 0:
             return []
 
         delta_dollars = delta * self.broker.portfolio.net_worth()
-        self.position = self.target_position
         return [
             events.OrderEvent(
                 time=market_event.time,

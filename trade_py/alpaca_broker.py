@@ -1,12 +1,13 @@
 import asyncio
 import queue
 import threading
-from typing import Tuple
+from typing import List, Tuple
 
 
 from alpaca.data.live import StockDataStream
 from alpaca.trading.client import TradingClient
-from alpaca.trading.enums import OrderSide, TimeInForce
+from alpaca.trading.enums import OrderSide, PositionSide, TimeInForce, TradeEvent
+from alpaca.trading.models import Position, TradeAccount, TradeUpdate
 from alpaca.trading.requests import MarketOrderRequest
 from alpaca.trading.stream import TradingStream
 
@@ -21,10 +22,12 @@ from . import portfolio
 class AlpacaBroker(broker.Broker):
     def __init__(self, cfg: dict):
         super().__init__(cfg)
-        self.portfolio = portfolio.Portfolio()
 
         keys = credentials.get_alpaca_keys()
         self.client = TradingClient(keys['api_key'], keys['api_secret'])
+
+        # Initialize portfolio to mirror live.
+        self.portfolio = self._sync_portfolio()
 
         # Set up stream to listen to trade events
         self.trading_stream = TradingStream(keys['api_key'], keys['api_secret'])
@@ -41,6 +44,18 @@ class AlpacaBroker(broker.Broker):
         self._start_stream(self.trading_stream)
         self._start_stream(self.stock_stream)
 
+    def _sync_portfolio(self):
+        p = portfolio.Portfolio()
+        account: TradeAccount = self.client.get_account()
+        p.cash = float(account.cash)
+        positions: List[Position] = self.client.get_all_positions()
+        for position in positions:
+            assert position.side == PositionSide.LONG
+            p.positions[position.symbol] = portfolio.Position(
+                quantity=float(position.qty), price=float(position.current_price)
+            )
+        return p
+
     def _start_stream(self, stream):
         try:
             # If an event loop is running (e.g. in IPython), schedule task
@@ -56,7 +71,6 @@ class AlpacaBroker(broker.Broker):
             thread = threading.Thread(target=runner, daemon=True)
             thread.start()
 
-
     async def on_quote_data(self, data):
         self.bars.on_event(time=data.timestamp, price=data.ask_price)
 
@@ -71,6 +85,8 @@ class AlpacaBroker(broker.Broker):
 
     def process_order_event(self, order_event: events.OrderEvent):
         buy_or_sell, quantity = quantity_to_buy_sell(order_event.quantity)
+        if quantity.value:
+            quantity.value = round(quantity.value, 2)
         order_request = MarketOrderRequest(
             symbol=order_event.symbol,
             qty=quantity.shares,
@@ -84,17 +100,21 @@ class AlpacaBroker(broker.Broker):
         print(order)
 
     # Define the asynchronous callback function to handle trade updates
-    async def on_trade_update(self, data):
-        if data.event == "fill":
-            print(f"Order filled: {data.order.id} at {data.price} for {data.qty} shares")
+    async def on_trade_update(self, data: TradeUpdate):
+        if data.event in (TradeEvent.PARTIAL_FILL, TradeEvent.FILL):
+            time = data.order.filled_at
+            avg_price = data.price
+            qty = data.qty
+            if data.order.side == OrderSide.SELL:
+                qty *= -1
+            print(f"Order filled: {data.order.id} at {avg_price} for {qty} shares")
             fill_event = events.FillEvent(
-                time=data.timestamp,
+                time=time,
                 symbol=self.cfg.symbol,
-                quantity=data.qty,
-                price=data.price,
+                quantity=qty,
+                price=avg_price,
             )
             self.portfolio.on_fill(fill_event)
-
 
 
 def quantity_to_buy_sell(quantity: events.Quantity) -> Tuple[OrderSide, events.Quantity]:

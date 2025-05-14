@@ -53,6 +53,8 @@ class MarketEvent(Event):
                 f"OHLC(o={self.ohlc.o:.2f}, h={self.ohlc.h:.2f}, "
                 f"l={self.ohlc.l:.2f}, c={self.ohlc.c:.2f}))")
 
+    __repr__ = __str__
+
 
 @dataclass
 class FillEvent(Event):
@@ -84,3 +86,5 @@ class OrderEvent(Event):
                   else f"value=${self.quantity.value:.2f}")
         return (f"OrderEvent(time={self.time.strftime('%Y-%m-%d %H:%M:%S')}, "
                 f"symbol={self.symbol}, {qty_str})")
+
+    __repr__ = __str__
