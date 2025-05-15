@@ -38,7 +38,7 @@ class SimulatedBroker(broker.Broker):
 
     def process_order_event(self, order_event: events.OrderEvent):
         o = order_event
-        price = self.data.ohlc.o
+        price = self.data.ohlc.c
         if o.quantity.shares is not None:
             quantity = o.quantity.shares
         elif o.quantity.value is not None:

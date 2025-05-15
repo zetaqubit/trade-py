@@ -27,7 +27,7 @@ class AlpacaBroker(broker.Broker):
         self.client = TradingClient(keys['api_key'], keys['api_secret'])
 
         # Initialize portfolio to mirror live.
-        self.portfolio = self._sync_portfolio()
+        self._sync_portfolio()
 
         # Set up stream to listen to trade events
         self.trading_stream = TradingStream(keys['api_key'], keys['api_secret'])
@@ -45,7 +45,7 @@ class AlpacaBroker(broker.Broker):
         self._start_stream(self.stock_stream)
 
     def _sync_portfolio(self):
-        p = portfolio.Portfolio()
+        self.portfolio = p = portfolio.Portfolio()
         account: TradeAccount = self.client.get_account()
         p.cash = float(account.cash)
         positions: List[Position] = self.client.get_all_positions()
@@ -54,7 +54,6 @@ class AlpacaBroker(broker.Broker):
             p.positions[position.symbol] = portfolio.Position(
                 quantity=float(position.qty), price=float(position.current_price)
             )
-        return p
 
     def _start_stream(self, stream):
         try:
@@ -81,6 +80,7 @@ class AlpacaBroker(broker.Broker):
     def next(self):
         market_event = self.market_events.get()
         self.portfolio.on_market_event(market_event)
+        self._sync_portfolio()
         return market_event
 
     def process_order_event(self, order_event: events.OrderEvent):
@@ -94,10 +94,7 @@ class AlpacaBroker(broker.Broker):
             side=buy_or_sell,
             time_in_force=TimeInForce.DAY,
         )
-        print(order_request)
-
         order = self.client.submit_order(order_data=order_request)
-        print(order)
 
     # Define the asynchronous callback function to handle trade updates
     async def on_trade_update(self, data: TradeUpdate):

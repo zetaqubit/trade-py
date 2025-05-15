@@ -29,10 +29,9 @@ class PositionStrategy(strategy.Strategy):
 
     def process_market_event(self, market_event: events.MarketEvent):
         delta = self.target_position - self.broker.portfolio.equity_position()
-        if delta == 0:
-            return []
-
         delta_dollars = delta * self.broker.portfolio.net_worth()
+        if -1 <= delta_dollars <= 1:
+            return []
         return [
             events.OrderEvent(
                 time=market_event.time,
@@ -62,8 +61,8 @@ class MomentumStrategy(PositionStrategy):
     def process_market_event(self, market_event: events.MarketEvent):
         current_price = market_event.ohlc.c
         if current_price > self.last_price:
-            self.target_position = 1
+            self.target_position = 0.9
         else:
-            self.target_position = 0
+            self.target_position = 0.1
         self.last_price = current_price
         return super().process_market_event(market_event)

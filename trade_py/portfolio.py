@@ -6,6 +6,11 @@ class Position:
     quantity: float = 0.0
     price: float = 0.0
 
+    def __str__(self):
+        return f'Position(quantity={self.quantity:.2f}, price={self.price:.2f})'
+
+    __repr__ = __str__
+
 class Portfolio:
     """Manages positions and cash, generates orders from signals."""
     def __init__(self, initial_cash=100000.0):
@@ -35,13 +40,16 @@ class Portfolio:
     def net_worth(self):
         return self.cash + sum(p.quantity * p.price for p in self.positions.values())
 
-
     def equity_position(self):
         return 1 - self.cash / self.net_worth()
 
-
     def __str__(self):
-        return (f'Portfolio(cash={self.cash:.2f}, net_worth={self.net_worth():.2f}, '
-                f'positions={dict(self.positions)})')
+        return (
+            f"Portfolio("
+            f"equity_position={self.equity_position():.2f}, "
+            f"net_worth={self.net_worth():.2f}, cash={self.cash:.2f}, "
+            f"positions={dict(self.positions)}"
+            ")"
+        )
 
     __repr__ = __str__
