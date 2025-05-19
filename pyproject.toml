@@ -3,6 +3,7 @@ name = "trade-py"
 version = "0.1.0"
 dependencies = [
   "absl-py",
+  "backtesting",
   "numpy",
   "pandas >=2.0",
 ]

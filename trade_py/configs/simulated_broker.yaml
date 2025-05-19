@@ -1,5 +1,5 @@
 broker_type: SimulatedBroker
-df_path: ~/data/zetaqubit/stock/alpaca/GOOG-1Hour.csv
+df_path: ~/data/zetaqubit/stock/alpaca/GOOG-1Min.csv
 symbol: GOOG
 start_date: 2025-04-21  # inclusive
 end_date: 2025-04-26  # exclusive
