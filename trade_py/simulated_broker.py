@@ -1,4 +1,4 @@
-from . import broker, events, portfolio
+from trade_py import broker, events, portfolio
 
 import pandas as pd
 
@@ -25,7 +25,7 @@ class SimulatedBroker(broker.Broker):
         self.current_i += 1
         row = self.df.iloc[self.current_i]
 
-        def row_to_market_event(row):
+        def row_to_market_event(row: pd.Series):
             return events.MarketEvent(
                 time=row.timestamp,
                 symbol=self.cfg.symbol,

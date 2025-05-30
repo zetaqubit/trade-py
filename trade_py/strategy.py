@@ -1,4 +1,4 @@
-from . import events
+from trade_py import events
 
 
 class Strategy:

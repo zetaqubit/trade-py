@@ -1,9 +1,6 @@
 import random
 
-from . import broker
-from . import configs
-from . import events
-from . import strategy
+from trade_py import broker, configs, events, strategy
 
 
 def create(cfg: dict | str, broker: broker.Broker) -> strategy.Strategy:
@@ -11,7 +8,7 @@ def create(cfg: dict | str, broker: broker.Broker) -> strategy.Strategy:
         cfg = configs.load_config(cfg)
     strategy_cls = globals().get(cfg.strategy_type, None)
     if not strategy_cls or not issubclass(strategy_cls, strategy.Strategy):
-        raise NotImplementedError(f'Unknown {cfg.strategy_type=}.')
+        raise NotImplementedError(f"Unknown {cfg.strategy_type=}.")
     return strategy_cls(cfg, broker)
 
 

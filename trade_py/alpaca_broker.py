@@ -3,20 +3,19 @@ import queue
 import threading
 from typing import List, Tuple
 
-
 from alpaca.data.live import StockDataStream
 from alpaca.trading.client import TradingClient
-from alpaca.trading.enums import OrderSide, PositionSide, TimeInForce, TradeEvent
+from alpaca.trading.enums import (
+    OrderSide,
+    PositionSide,
+    TimeInForce,
+    TradeEvent,
+)
 from alpaca.trading.models import Position, TradeAccount, TradeUpdate
 from alpaca.trading.requests import MarketOrderRequest
 from alpaca.trading.stream import TradingStream
 
-
-from . import bars
-from . import broker
-from . import credentials
-from . import events
-from . import portfolio
+from trade_py import bars, broker, credentials, events, portfolio
 
 
 class AlpacaBroker(broker.Broker):
@@ -24,17 +23,17 @@ class AlpacaBroker(broker.Broker):
         super().__init__(cfg)
 
         keys = credentials.get_alpaca_keys()
-        self.client = TradingClient(keys['api_key'], keys['api_secret'])
+        self.client = TradingClient(keys["api_key"], keys["api_secret"])
 
         # Initialize portfolio to mirror live.
         self._sync_portfolio()
 
         # Set up stream to listen to trade events
-        self.trading_stream = TradingStream(keys['api_key'], keys['api_secret'])
+        self.trading_stream = TradingStream(keys["api_key"], keys["api_secret"])
         self.trading_stream.subscribe_trade_updates(self.on_trade_update)
 
         # Set up stream for real-time price updates.
-        self.stock_stream = StockDataStream(keys['api_key'], keys['api_secret'])
+        self.stock_stream = StockDataStream(keys["api_key"], keys["api_secret"])
         self.stock_stream.subscribe_quotes(self.on_quote_data, self.cfg.symbol)
 
         self.bars = bars.Bars()
@@ -74,7 +73,9 @@ class AlpacaBroker(broker.Broker):
         self.bars.on_event(time=data.timestamp, price=data.ask_price)
 
     def on_bar(self, ohlc: events.OHLC):
-        market_event = events.MarketEvent(time=ohlc.end, symbol=self.cfg.symbol, ohlc=ohlc)
+        market_event = events.MarketEvent(
+            time=ohlc.end, symbol=self.cfg.symbol, ohlc=ohlc
+        )
         self.market_events.put(market_event)
 
     def next(self):
@@ -114,7 +115,9 @@ class AlpacaBroker(broker.Broker):
             self.portfolio.on_fill(fill_event)
 
 
-def quantity_to_buy_sell(quantity: events.Quantity) -> Tuple[OrderSide, events.Quantity]:
+def quantity_to_buy_sell(
+    quantity: events.Quantity,
+) -> Tuple[OrderSide, events.Quantity]:
     if quantity.shares and quantity.shares < 0:
         return (OrderSide.SELL, events.Quantity(shares=-quantity.shares))
     if quantity.value and quantity.value < 0:

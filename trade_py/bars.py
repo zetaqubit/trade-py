@@ -5,7 +5,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Callable
 
-from . import events
+from trade_py import events
 
 
 class Frequency(Enum):

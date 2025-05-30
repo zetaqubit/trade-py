@@ -1,18 +1,13 @@
-"""Main event loop enabling communication between the Strategy and Broker.
-"""
+"""Main event loop enabling communication between the Strategy and Broker."""
 
-from absl import app
-from absl import flags
+from absl import app, flags
 
-from . import brokers
-from . import configs
-from . import events
-from . import strategies
+from trade_py import brokers, strategies
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string('broker_config', None, "yaml config of broker to use.")
-flags.DEFINE_string('strategy_config', None, "yaml config of strategy to use.")
+flags.DEFINE_string("broker_config", None, "yaml config of broker to use.")
+flags.DEFINE_string("strategy_config", None, "yaml config of strategy to use.")
 
 
 def main(_):
@@ -35,6 +30,6 @@ def main(_):
 
     print(broker.portfolio.net_worth())
 
-if __name__ == '__main__':
-    app.run(main)
 
+if __name__ == "__main__":
+    app.run(main)
