@@ -3,7 +3,11 @@ name = "trade-py"
 version = "0.1.0"
 dependencies = [
   "absl-py",
+  "alpaca-py",
+  "alpaca-trade-api",
   "backtesting",
+  "brax",
+  "jax[cuda12]",
   "numpy",
   "pandas >=2.0",
 ]
