@@ -15,16 +15,22 @@ class State:
 
 
 class SingleAssetTradingEnv(env.Env):
-    def __init__(self, prices: jnp.ndarray, max_episode_len: int = 1000, window_size: int = 5):
+    def __init__(self, prices: jnp.ndarray, max_episode_len: int = 1000, window_size: int = 5,
+                 is_eval: bool = False):
         """
         prices: [T] array of prices
         window_size: number of previous prices in observation
         """
         assert prices.ndim == 1
         self.prices = prices
-        self.max_episode_len = max_episode_len
         self.window_size = window_size
-        self.max_start = len(prices) - max_episode_len - window_size - 1  # leave space for window and step
+        if is_eval:
+            self.max_episode_len = len(prices) - window_size - 1
+            self.max_start = 1
+        else:
+            self.max_episode_len = max_episode_len
+            self.max_start = len(prices) - max_episode_len - window_size - 1  # leave space for window and step
+
 
     @property
     def observation_size(self):
@@ -85,7 +91,7 @@ class SingleAssetTradingEnv(env.Env):
 
         # Advance step
         step = step + 1
-        done = jnp.where(step - internal_state.start_step >= self.max_episode_len, 1.0, 0.0)  # TODO: fix
+        done = jnp.where(step - internal_state.start_step >= self.max_episode_len, 1.0, 0.0)
         obs = self._get_obs(step, allocation, new_portfolio_value, new_buy_hold_portfolio_value)
 
         metrics = state.metrics | {
