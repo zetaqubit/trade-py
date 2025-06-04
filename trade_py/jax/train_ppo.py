@@ -1,10 +1,12 @@
 import functools
 import jax
 import os
+import random
 
 from contextlib import nullcontext
 from datetime import datetime, timedelta
 from jax import numpy as jnp
+import numpy as np
 
 import brax
 
@@ -94,14 +96,27 @@ def train_and_eval(train_start_date, train_days, eval_days, max_episode_len, deb
         make_inference_fn, params, _ = train_fn(environment=train_env, eval_env=eval_env, progress_fn=progress)
 
     if len(times) > 3:
+        print(f'time to jit: {times[1] - times[0]}')
+        print(f'time to train: {times[-1] - times[1]}')
+        print()
+
         print(f'avg rl reward (last 50 evals)', jnp.mean(jnp.array(rl_rewards[-50:])), '(first 50 evals)', jnp.mean(jnp.array(rl_rewards[:50])))
         print(f'avg bh reward (last 50 evals)', jnp.mean(jnp.array(bh_rewards[-50:])), '(first 50 evals)', jnp.mean(jnp.array(bh_rewards[:50])))
         print(f'CAGR rl (last 50 evals)', cagr(jnp.mean(jnp.array(rl_rewards[-50:])) - 1, days=eval_days), '(first 50 evals)', cagr(jnp.mean(jnp.array(rl_rewards[:50])) - 1, eval_days))
 
-        print(f'time to jit: {times[1] - times[0]}')
-        print(f'time to train: {times[-1] - times[1]}')
+        print(f'random action reward: {get_random_return(eval_env.prices)}')
+
+
+def get_random_return(prices):
+    # simulated return if on each bar, we had 50% chance of holding the equity.
+    log_returns = 0
+    for prev, curr in zip(prices[:-1], prices[1:]):
+        if random.choice([0, 1]):
+            log_returns += np.log(curr / prev)
+    returns = np.exp(log_returns)
+    return returns
 
 
 if __name__ == '__main__':
-    train_and_eval(train_start_date='2024-09-01', train_days = 28, eval_days = 28, max_episode_len = 100)
+    train_and_eval(train_start_date='2024-09-01', train_days=28, eval_days=28, max_episode_len=100)
 

@@ -3,4 +3,4 @@
 ## TODO
 [ ] Walk-forward eval over 1 year
 [ ] Compute full backtest metrics via backtesting.py
-[ ] Compare against random strategy
+[x] Compare against random strategy
